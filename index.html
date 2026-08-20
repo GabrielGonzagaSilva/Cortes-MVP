@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="MVP local-first para criar cortes verticais no navegador." />
+  <meta name="theme-color" content="#09090b" />
+  <title>Cortes — MVP</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://huggingface.co" crossorigin />
+  <link rel="stylesheet" href="/src/styles.css" />
+</head>
+<body>
+  <a class="skip" href="#app">Ir para o conteúdo</a>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">C</span><div><small>PROTÓTIPO FUNCIONAL</small><strong>Cortes</strong></div></div>
+    <div class="local-badge"><span></span> Processamento local</div>
+  </header>
+
+  <main id="app" class="shell">
+    <section class="hero">
+      <div><p class="eyebrow">DO ARQUIVO AO SHORT</p><h1>Crie cortes verticais sem enviar o vídeo para um servidor.</h1><p>Selecione o trecho, gere legenda e exporte o MP4 diretamente no navegador.</p></div>
+      <aside><strong>Local-first</strong><span>O vídeo permanece no seu dispositivo durante o fluxo principal.</span></aside>
+    </section>
+
+    <nav class="steps" aria-label="Etapas">
+      <button class="step active" data-stage-button="1"><b>1</b><span>Arquivo</span></button>
+      <button class="step" data-stage-button="2" disabled><b>2</b><span>Corte</span></button>
+      <button class="step" data-stage-button="3" disabled><b>3</b><span>Legenda</span></button>
+      <button class="step" data-stage-button="4" disabled><b>4</b><span>Exportar</span></button>
+    </nav>
+
+    <div class="layout">
+      <section class="panel">
+        <section class="stage active" data-stage="1">
+          <div class="heading"><div><p class="eyebrow">ETAPA 1</p><h2>Escolha um vídeo</h2></div><span class="pill">MP4 · MOV · WEBM</span></div>
+          <label id="dropzone" class="dropzone" for="video-input">
+            <input id="video-input" type="file" accept="video/*" />
+            <span class="upload">↑</span><strong>Arraste o vídeo ou clique para selecionar</strong><small>Para o primeiro teste, prefira um arquivo curto.</small>
+          </label>
+          <div id="file-card" class="file-card hidden"><div><strong id="file-name">—</strong><small id="file-meta">—</small></div><button id="replace-file" class="btn ghost small">Trocar</button></div>
+          <label class="consent"><input id="rights" type="checkbox" /><span>Confirmo que tenho direito ou autorização para utilizar e republicar este conteúdo.</span></label>
+          <div class="actions end"><button id="to-cut" class="btn primary" disabled>Continuar para o corte</button></div>
+        </section>
+
+        <section class="stage" data-stage="2">
+          <div class="heading"><div><p class="eyebrow">ETAPA 2</p><h2>Defina o corte</h2></div><span id="clip-duration" class="pill">00:00</span></div>
+          <div class="video-frame landscape"><video id="source-video" controls playsinline preload="metadata"></video></div>
+          <div class="card controls">
+            <div class="form-grid">
+              <label>Início (s)<input id="start-time" type="number" min="0" step="0.1" value="0" /></label>
+              <label>Fim (s)<input id="end-time" type="number" min="0" step="0.1" value="0" /></label>
+              <label>Formato<select id="aspect"><option value="vertical">Vertical 9:16</option><option value="original">Original</option></select></label>
+              <label>Qualidade<select id="quality"><option value="fast">Rápido · 540×960</option><option value="standard">Padrão · 720×1280</option></select></label>
+            </div>
+            <input id="seek" class="range" type="range" min="0" max="100" value="0" step="0.1" />
+            <div class="range-meta"><span>Posição atual</span><span id="current-time">00:00</span></div>
+            <div class="quick"><button id="set-start" class="btn ghost small">Usar como início</button><button id="set-end" class="btn ghost small">Usar como fim</button><button id="preview" class="btn ghost small">Pré-visualizar trecho</button></div>
+          </div>
+          <div class="actions split"><button class="btn ghost back" data-back="1">Voltar</button><button id="to-caption" class="btn primary">Continuar para legenda</button></div>
+        </section>
+
+        <section class="stage" data-stage="3">
+          <div class="heading"><div><p class="eyebrow">ETAPA 3</p><h2>Transcrição e legenda</h2></div><span class="pill">BETA LOCAL</span></div>
+          <div class="notice"><strong>Whisper no navegador</strong><span>Na primeira execução o modelo de IA é baixado para o navegador. Isso usa internet e memória, mas não exige API paga.</span></div>
+          <div class="caption-grid">
+            <div><div class="label-row"><label for="transcript">Transcrição</label><button id="transcribe" class="btn secondary small">Transcrever automaticamente</button></div><textarea id="transcript" rows="10" placeholder="A transcrição aparecerá aqui. Você também pode inserir o texto manualmente."></textarea><p id="transcribe-status" class="help">Nenhuma transcrição executada.</p></div>
+            <div class="card settings"><h3>Legenda no vídeo</h3><label class="toggle"><span><strong>Queimar legenda</strong><small>Inclui a legenda no MP4 quando o build do FFmpeg suportar.</small></span><input id="burn" type="checkbox" checked /></label><label>Posição<select id="caption-position"><option value="bottom">Inferior</option><option value="center">Centro</option></select></label><button id="download-srt" class="btn ghost full" disabled>Baixar .SRT</button></div>
+          </div>
+          <div class="actions split"><button class="btn ghost back" data-back="2">Voltar</button><button id="to-export" class="btn primary">Continuar para exportação</button></div>
+        </section>
+
+        <section class="stage" data-stage="4">
+          <div class="heading"><div><p class="eyebrow">ETAPA 4</p><h2>Renderize e baixe</h2></div><span class="pill">MP4</span></div>
+          <div class="export-grid">
+            <div><div class="video-frame portrait"><video id="output-video" controls playsinline></video><div id="output-empty" class="output-empty">Seu corte aparecerá aqui</div></div><div id="progress-wrap" class="progress-wrap hidden"><div class="range-meta"><span id="progress-label">Preparando…</span><strong id="progress-value">0%</strong></div><div class="progress-track"><div id="progress-bar"></div></div></div></div>
+            <div class="card publish"><h3>Texto da publicação</h3><label>Título<input id="post-title" type="text" placeholder="Título sugerido" /></label><label>Descrição<textarea id="post-description" rows="7" placeholder="Descrição sugerida"></textarea></label><button id="generate-copy" class="btn ghost full">Gerar a partir da transcrição</button><button id="copy-post" class="btn ghost full">Copiar texto</button></div>
+          </div>
+          <div id="render-warning" class="notice warning hidden" role="alert"></div>
+          <div class="actions split"><button class="btn ghost back" data-back="3">Voltar</button><div class="action-cluster"><button id="render" class="btn primary">Renderizar vídeo</button><button id="download-video" class="btn success hidden">Baixar MP4</button></div></div>
+        </section>
+      </section>
+
+      <aside class="sidebar">
+        <section class="side-card"><p class="eyebrow">RESUMO</p><dl><div><dt>Arquivo</dt><dd id="sum-file">Não selecionado</dd></div><div><dt>Trecho</dt><dd id="sum-clip">—</dd></div><div><dt>Formato</dt><dd id="sum-format">9:16</dd></div><div><dt>Legenda</dt><dd id="sum-caption">Pendente</dd></div></dl></section>
+        <section class="side-card emphasis"><p class="eyebrow">INFRAESTRUTURA</p><strong>R$ 0 no fluxo principal</strong><p>Renderização e transcrição rodam no dispositivo do usuário.</p></section>
+        <section class="side-card"><p class="eyebrow">LIMITES DO MVP</p><ul><li>Sem busca automática de vídeos</li><li>Sem publicação automática</li><li>Sem garantia de viralização</li></ul></section>
+      </aside>
+    </div>
+  </main>
+  <footer>Use apenas conteúdo próprio, licenciado ou autorizado.</footer>
+  <script type="module" src="/src/app.js"></script>
+</body>
+</html>
