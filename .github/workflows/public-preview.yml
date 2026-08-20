@@ -1,0 +1,38 @@
+name: Publish public preview
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build
+        run: npm run build
+      - name: Publish preview branch
+        shell: bash
+        run: |
+          rm -rf /tmp/cortes-preview
+          mkdir -p /tmp/cortes-preview
+          cp -R dist/. /tmp/cortes-preview/
+          git checkout --orphan preview
+          git rm -rf .
+          cp -R /tmp/cortes-preview/. .
+          git add -A
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'chore: publish public preview'
+          git push origin preview --force
